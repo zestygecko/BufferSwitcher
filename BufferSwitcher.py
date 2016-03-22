@@ -38,18 +38,17 @@ class ViewItem (object):
 # COMMAND
 #============================================================================
 class BufferSwitcherCommand (sublime_plugin.WindowCommand):
-    # declarations
-    open_files = []
-    open_views = []
-    window = []
-    settings = []
-    folders = []
-    views = []
 
     def get_views (self):
         views = []
-
         file_paths = set()
+
+        curr_view = self.window.active_view()
+        self.window.run_command('next_view_in_stack')
+        other_vi = ViewItem(self.window.active_view())
+        self.window.focus_view(curr_view)
+        file_paths.add(other_vi.path)
+
         for vi in [ ViewItem(v) for v in self.window.views() ]:
             # Only show each file once
             if vi.path and vi.path in file_paths:
@@ -58,19 +57,15 @@ class BufferSwitcherCommand (sublime_plugin.WindowCommand):
             file_paths.add(vi.path)
             views.append(vi)
 
+        views.sort()
+        views.insert(0, other_vi)
+
         return views
 
     def run (self):
-        # self.open_files = []
-        # self.open_views = []
-        # self.window = sublime.active_window()
-        # self.settings = sublime.load_settings('BufferSwitcher.sublime-settings')
-        #
-
         folders = self.window.folders()
-        self.views = sorted(self.get_views())
+        self.views = self.get_views()
 
-        #items = [ [v.name, v.trimmed_path(folders)] for v in self.views ]
         items = [ v.name for v in self.views ]
         self.window.show_quick_panel(items, self.tab_selected, 0, -1)
         return
